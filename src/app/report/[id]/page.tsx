@@ -1,7 +1,7 @@
 "use client"
 import { useEffect, useState, useCallback } from "react"
 import { motion } from "framer-motion"
-import { Flame, ArrowLeft, ExternalLink, Lock, Unlock, AlertTriangle, Share2 } from "lucide-react"
+import { Flame, ArrowLeft, ExternalLink, Lock, Unlock, AlertTriangle } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
 import { RoastReport } from "@/lib/types"
@@ -10,6 +10,7 @@ import ScoreCircle from "@/components/ScoreCircle"
 import CategoryCard from "@/components/CategoryCard"
 import PaymentModal from "@/components/PaymentModal"
 import LoadingAnimation from "@/components/LoadingAnimation"
+import ShareButtons from "@/components/ShareButtons"
 
 const WALLET = process.env.NEXT_PUBLIC_USDT_WALLET || ""
 const PRICE = 9.99
@@ -30,13 +31,6 @@ export default function ReportPage({ params }: { params: { id: string } }) {
   }, [params.id])
 
   useEffect(() => { fetchReport() }, [fetchReport])
-
-  function shareOnTwitter() {
-    if (!report) return
-    const text = `Just got my landing page roasted by AI!\nScore: ${report.overallScore}/100\nGet yours at`
-    const u = typeof window !== "undefined" ? window.location.origin : ""
-    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(u)}`, "_blank")
-  }
 
   if (loading) return <LoadingAnimation />
   if (error || !report) return (
@@ -61,20 +55,15 @@ export default function ReportPage({ params }: { params: { id: string } }) {
             <ArrowLeft className="w-4 h-4" /><Flame className="w-5 h-5 text-orange-500" />
             <span className="font-bold hidden sm:inline">RoastPage<span className="text-orange-500">.ai</span></span>
           </Link>
-          <div className="flex items-center gap-3">
-            <a href={report.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-sm text-dark-400 hover:text-white transition truncate max-w-[200px]">
-              {extractDomain(report.url)} <ExternalLink className="w-3 h-3 flex-shrink-0" />
-            </a>
-            <button onClick={shareOnTwitter} className="flex items-center gap-1 px-3 py-1.5 text-sm bg-dark-800 hover:bg-dark-700 border border-dark-600 rounded-lg transition">
-              <Share2 className="w-3.5 h-3.5" /> Share
-            </button>
-          </div>
+          <a href={report.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-sm text-dark-400 hover:text-white transition truncate max-w-[200px]">
+            {extractDomain(report.url)} <ExternalLink className="w-3 h-3 flex-shrink-0" />
+          </a>
         </div>
       </nav>
 
       <div className="max-w-4xl mx-auto px-4 pt-8">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-12">
-          <h1 className="text-2xl sm:text-3xl font-bold mb-6">Your Roast Results</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold mb-6">Your Roast Results 🔥</h1>
           <div className="flex justify-center mb-6"><ScoreCircle score={report.overallScore} /></div>
           <p className="text-dark-200 max-w-2xl mx-auto text-lg mb-4">{report.summary}</p>
           {report.topFixes && report.topFixes.length > 0 && (
@@ -109,7 +98,7 @@ export default function ReportPage({ params }: { params: { id: string } }) {
               {paidCategories.map((cat, i) => <CategoryCard key={i} category={cat} index={i} locked />)}
             </div>
             <div className="glass-card border-orange-500/30 text-center">
-              <h3 className="text-2xl font-bold mb-2">Unlock Full Roast</h3>
+              <h3 className="text-2xl font-bold mb-2">Unlock Full Roast 🔥</h3>
               <p className="text-dark-300 mb-2">Get all {report.categories.length} categories with detailed fixes</p>
               <div className="text-4xl font-black text-orange-500 mb-1">${PRICE}</div>
               <p className="text-sm text-dark-400 mb-6">One-time | USDT on Polygon</p>
@@ -128,10 +117,12 @@ export default function ReportPage({ params }: { params: { id: string } }) {
           </div>
         )}
 
-        <div className="text-center mt-12">
-          <button onClick={shareOnTwitter} className="inline-flex items-center gap-2 px-6 py-3 bg-dark-800 hover:bg-dark-700 border border-dark-600 rounded-xl text-sm font-semibold transition">
-            <Share2 className="w-4 h-4" /> Share your roast on X
-          </button>
+        <div className="mt-12 mb-8">
+          <ShareButtons score={report.overallScore} url={report.url} />
+        </div>
+
+        <div className="text-center">
+          <Link href="/" className="text-orange-500 hover:underline text-sm">Roast another page →</Link>
         </div>
       </div>
 
