@@ -5,6 +5,34 @@ import { store } from "@/lib/store"
 import { RoastReport, RoastCategory } from "@/lib/types"
 import { isValidUrl } from "@/lib/utils"
 
+async function checkUrlExists(url: string): Promise<boolean> {
+  try {
+    const c = new AbortController()
+    const t = setTimeout(() => c.abort(), 10000)
+    const r = await fetch(url, {
+      method: "HEAD",
+      signal: c.signal,
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; RoastPageBot/1.0)" },
+      redirect: "follow",
+    })
+    clearTimeout(t)
+    return r.ok || r.status === 403 || r.status === 405
+  } catch {
+    try {
+      const c = new AbortController()
+      const t = setTimeout(() => c.abort(), 10000)
+      const r = await fetch(url, {
+        method: "GET",
+        signal: c.signal,
+        headers: { "User-Agent": "Mozilla/5.0 (compatible; RoastPageBot/1.0)" },
+        redirect: "follow",
+      })
+      clearTimeout(t)
+      return r.ok
+    } catch { return false }
+  }
+}
+
 async function getScreenshotBase64(url: string): Promise<string | null> {
   try {
     const screenshotUrl = `https://image.thum.io/get/width/1280/crop/900/noanimate/${url}`
@@ -84,7 +112,12 @@ export async function POST(request: NextRequest) {
   try {
     const { url } = await request.json()
     if (!url || typeof url !== "string") return NextResponse.json({ error: "URL is required" }, { status: 400 })
-    if (!isValidUrl(url)) return NextResponse.json({ error: "Invalid URL" }, { status: 400 })
+    if (!isValidUrl(url)) return NextResponse.json({ error: "Please enter a valid URL (e.g. https://example.com)" }, { status: 400 })
+
+    const exists = await checkUrlExists(url)
+    if (!exists) {
+      return NextResponse.json({ error: "This URL is not reachable. Please check the address and try again." }, { status: 400 })
+    }
 
     const reportId = nanoid(12)
     const screenshotDisplayUrl = `https://image.thum.io/get/width/1280/crop/900/noanimate/${url}`
@@ -95,7 +128,7 @@ export async function POST(request: NextRequest) {
     ])
 
     if (!screenshotBase64 && !pageText) {
-      return NextResponse.json({ error: "Could not access this URL. Please check it is public." }, { status: 400 })
+      return NextResponse.json({ error: "Could not load page content. The site may be blocking bots." }, { status: 400 })
     }
 
     const analysis = await analyzeWithAI(url, screenshotBase64, pageText)
@@ -124,6 +157,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ id: reportId, status: "complete" })
   } catch (error: any) {
     console.error("Roast error:", error)
-    return NextResponse.json({ error: error.message || "Analysis failed" }, { status: 500 })
+    return NextResponse.json({ error: error.message || "Analysis failed. Please try again." }, { status: 500 })
   }
 }
