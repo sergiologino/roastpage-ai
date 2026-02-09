@@ -1,12 +1,25 @@
-﻿import { NextRequest, NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { nanoid } from "nanoid"
 import { ROAST_SYSTEM_PROMPT, buildUserPrompt } from "@/lib/prompts"
 import { store } from "@/lib/store"
 import { RoastReport, RoastCategory } from "@/lib/types"
 import { isValidUrl } from "@/lib/utils"
 
-function getScreenshotUrl(url: string): string {
-  return `https://image.thum.io/get/width/1280/crop/900/noanimate/${url}`
+async function getScreenshotBase64(url: string): Promise<string | null> {
+  try {
+    const screenshotUrl = `https://image.thum.io/get/width/1280/crop/900/noanimate/${url}`
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 15000)
+    const res = await fetch(screenshotUrl, { signal: controller.signal })
+    clearTimeout(timeout)
+    if (!res.ok) return null
+    const buffer = await res.arrayBuffer()
+    const base64 = Buffer.from(buffer).toString("base64")
+    return `data:image/png;base64,${base64}`
+  } catch (e) {
+    console.error("Screenshot error:", e)
+    return null
+  }
 }
 
 async function fetchPageText(url: string): Promise<string> {
@@ -25,9 +38,20 @@ async function fetchPageText(url: string): Promise<string> {
   } catch { return "" }
 }
 
-async function analyzeWithAI(url: string, screenshotUrl: string, pageText: string) {
+async function analyzeWithAI(url: string, screenshotBase64: string | null, pageText: string) {
   const apiKey = process.env.OPENAI_API_KEY
   if (!apiKey) throw new Error("OpenAI API key not configured")
+
+  const userContent: any[] = [
+    { type: "text", text: buildUserPrompt(url, pageText) },
+  ]
+
+  if (screenshotBase64) {
+    userContent.push({
+      type: "image_url",
+      image_url: { url: screenshotBase64, detail: "high" },
+    })
+  }
 
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -36,10 +60,7 @@ async function analyzeWithAI(url: string, screenshotUrl: string, pageText: strin
       model: "gpt-4o",
       messages: [
         { role: "system", content: ROAST_SYSTEM_PROMPT },
-        { role: "user", content: [
-          { type: "text", text: buildUserPrompt(url, pageText) },
-          { type: "image_url", image_url: { url: screenshotUrl, detail: "high" } },
-        ]},
+        { role: "user", content: userContent },
       ],
       max_tokens: 4096,
       temperature: 0.7,
@@ -66,9 +87,18 @@ export async function POST(request: NextRequest) {
     if (!isValidUrl(url)) return NextResponse.json({ error: "Invalid URL" }, { status: 400 })
 
     const reportId = nanoid(12)
-    const screenshotUrl = getScreenshotUrl(url)
-    const pageText = await fetchPageText(url)
-    const analysis = await analyzeWithAI(url, screenshotUrl, pageText)
+    const screenshotDisplayUrl = `https://image.thum.io/get/width/1280/crop/900/noanimate/${url}`
+
+    const [screenshotBase64, pageText] = await Promise.all([
+      getScreenshotBase64(url),
+      fetchPageText(url),
+    ])
+
+    if (!screenshotBase64 && !pageText) {
+      return NextResponse.json({ error: "Could not access this URL. Please check it is public." }, { status: 400 })
+    }
+
+    const analysis = await analyzeWithAI(url, screenshotBase64, pageText)
 
     const categories: RoastCategory[] = (analysis.categories || []).map((cat: any, i: number) => ({
       name: cat.name || `Category ${i+1}`,
@@ -84,7 +114,7 @@ export async function POST(request: NextRequest) {
     }))
 
     const report: RoastReport = {
-      id: reportId, url, screenshotUrl,
+      id: reportId, url, screenshotUrl: screenshotDisplayUrl,
       overallScore: Math.min(100, Math.max(0, Math.round(analysis.overallScore || 50))),
       summary: analysis.summary || "Analysis complete.",
       topFixes: analysis.topFixes || [],
