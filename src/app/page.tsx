@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 import { useState, FormEvent } from "react"
 import { motion } from "framer-motion"
 import { Flame, Zap, Target, Eye, Smartphone, Brain, BarChart3, ArrowRight, Check, Star, Sparkles, Globe, ChevronDown, Loader2 } from "lucide-react"
@@ -73,7 +73,7 @@ export default function HomePage() {
         <div className="relative max-w-4xl mx-auto text-center">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass text-sm text-orange-300 mb-6">
-              <Sparkles className="w-4 h-4" /> Powered by GPT-4 Vision
+              <Sparkles className="w-4 h-4" /> Powered by Advanced AI
             </div>
             <h1 className="text-5xl sm:text-7xl font-black mb-6 leading-tight">
               Your landing page<br /><span className="text-gradient">needs a roast</span> {"\uD83D\uDD25"}

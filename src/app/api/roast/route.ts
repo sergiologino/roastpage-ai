@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { nanoid } from "nanoid"
-import { ROAST_SYSTEM_PROMPT, buildUserPrompt } from "@/lib/prompts"
+import { ROAST_SYSTEM_PROMPT, ROAST_SYSTEM_PROMPT_PRO, buildUserPrompt, buildUserPromptPro } from "@/lib/prompts"
 import { store } from "@/lib/store"
 import { RoastReport, RoastCategory } from "@/lib/types"
 import { isValidUrl } from "@/lib/utils"
@@ -49,22 +49,26 @@ async function fetchPageText(url: string): Promise<string> {
       .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, "")
       .replace(/<[^>]+>/g, " ")
       .replace(/\s+/g, " ")
-      .trim().slice(0, 4000)
+      .trim().slice(0, 5000)
   } catch { return "" }
 }
 
-async function analyzeWithAI(url: string, screenshotBase64: string | null, pageText: string) {
+async function analyzeWithAI(url: string, screenshotBase64: string | null, pageText: string, isPro: boolean) {
   const apiKey = process.env.OPENAI_API_KEY
   if (!apiKey) throw new Error("OpenAI API key not configured")
 
+  const model = isPro ? "gpt-4o" : "gpt-4o-mini"
+  const systemPrompt = isPro ? ROAST_SYSTEM_PROMPT_PRO : ROAST_SYSTEM_PROMPT
+  const userPrompt = isPro ? buildUserPromptPro(url, pageText) : buildUserPrompt(url, pageText)
+
   const userContent: any[] = [
-    { type: "text", text: buildUserPrompt(url, pageText) },
+    { type: "text", text: userPrompt },
   ]
 
   if (screenshotBase64) {
     userContent.push({
       type: "image_url",
-      image_url: { url: screenshotBase64, detail: "high" },
+      image_url: { url: screenshotBase64, detail: isPro ? "high" : "low" },
     })
   }
 
@@ -72,12 +76,12 @@ async function analyzeWithAI(url: string, screenshotBase64: string | null, pageT
     method: "POST",
     headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "gpt-4o",
+      model,
       messages: [
-        { role: "system", content: ROAST_SYSTEM_PROMPT },
+        { role: "system", content: systemPrompt },
         { role: "user", content: userContent },
       ],
-      max_tokens: 4096,
+      max_tokens: isPro ? 4096 : 3000,
       temperature: 0.7,
       response_format: { type: "json_object" },
     }),
@@ -102,7 +106,7 @@ async function analyzeWithAI(url: string, screenshotBase64: string | null, pageT
 
 export async function POST(request: NextRequest) {
   try {
-    const { url } = await request.json()
+    const { url, pro } = await request.json()
     if (!url || typeof url !== "string") return NextResponse.json({ error: "URL is required" }, { status: 400 })
     if (!isValidUrl(url)) return NextResponse.json({ error: "Please enter a valid URL (e.g. https://example.com)" }, { status: 400 })
 
@@ -123,7 +127,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Could not load page content. The site may be blocking automated access." }, { status: 400 })
     }
 
-    const analysis = await analyzeWithAI(url, screenshotBase64, pageText)
+    const analysis = await analyzeWithAI(url, screenshotBase64, pageText, !!pro)
 
     if (!analysis.categories || !Array.isArray(analysis.categories) || analysis.categories.length === 0) {
       return NextResponse.json({ error: "AI could not analyze this page. Please try a different URL." }, { status: 500 })
