@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { store } from "@/lib/store"
 import { nanoid } from "nanoid"
 
@@ -31,15 +31,15 @@ export async function POST(request: NextRequest) {
     if (!reportId || !txHash) return NextResponse.json({ error: "Missing data" }, { status: 400 })
     if (!txHash.startsWith("0x") || txHash.length < 60) return NextResponse.json({ error: "Invalid tx hash" }, { status: 400 })
 
-    const report = store.getReport(reportId)
+    const report = await store.getReport(reportId)
     if (!report) return NextResponse.json({ error: "Report not found" }, { status: 404 })
     if (report.isPaid) return NextResponse.json({ status: "confirmed", message: "Already paid" })
 
     const verified = await verifyOnChain(txHash)
     if (!verified) return NextResponse.json({ error: "Transaction not verified. Wait 30s and retry." }, { status: 400 })
 
-    store.setPayment({ id: nanoid(12), reportId, amount: 9.99, currency: "USDT", txHash, status: "confirmed", createdAt: new Date().toISOString() })
-    store.updateReport(reportId, { isPaid: true })
+    await store.setPayment({ id: nanoid(12), reportId, amount: 9.99, currency: "USDT", txHash, status: "confirmed", createdAt: new Date().toISOString() })
+    await store.updateReport(reportId, { isPaid: true })
     return NextResponse.json({ status: "confirmed" })
   } catch (error: any) {
     console.error("Payment error:", error)

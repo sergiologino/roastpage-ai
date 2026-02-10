@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { store } from "@/lib/store"
 
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
-  const report = store.getReport(params.id)
+  const report = await store.getReport(params.id)
   if (!report) return NextResponse.json({ error: "Report not found" }, { status: 404 })
 
   if (!report.isPaid) {

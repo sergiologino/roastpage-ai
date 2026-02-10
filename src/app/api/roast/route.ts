@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
       topFixes: analysis.topFixes || [],
       categories, isPaid: false, createdAt: new Date().toISOString(),
     }
-    store.setReport(report)
+    await store.setReport(report)
     return NextResponse.json({ id: reportId, status: "complete" })
   } catch (error: any) {
     console.error("Roast error:", error)
