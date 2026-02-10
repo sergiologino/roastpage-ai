@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   description: "AI analyzes your landing page and gives brutal, actionable feedback on copy, design, CTAs, and conversion potential. Score your page 0-100. Free analysis available.",
   keywords: ["landing page analyzer", "landing page roast", "conversion optimization", "AI feedback", "landing page score", "CRO tool", "website analyzer"],
   authors: [{ name: "RoastPage.ai" }],
+  verification: {
+    google: "UGxiVOS2RiiMw7wJ10LNKUHuMh1ic07dWVXk8sX9dig",
+  },
   openGraph: {
     title: "RoastPage.ai - Your Landing Page Needs a Roast",
     description: "AI analyzes your landing page and gives brutal, actionable feedback in 30 seconds.",
