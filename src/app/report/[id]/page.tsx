@@ -15,6 +15,17 @@ import ShareButtons from "@/components/ShareButtons"
 const WALLET = process.env.NEXT_PUBLIC_USDT_WALLET || ""
 const PRICE = 9.99
 
+function saveToHistory(report: RoastReport) {
+  try {
+    const key = "roastpage_history"
+    const stored = localStorage.getItem(key)
+    const history = stored ? JSON.parse(stored) : []
+    const item = { id: report.id, url: report.url, score: report.overallScore, createdAt: report.createdAt }
+    const updated = [item, ...history.filter((h: any) => h.id !== report.id)].slice(0, 50)
+    localStorage.setItem(key, JSON.stringify(updated))
+  } catch {}
+}
+
 export default function ReportPage({ params }: { params: { id: string } }) {
   const [report, setReport] = useState<RoastReport | null>(null)
   const [loading, setLoading] = useState(true)
@@ -25,7 +36,9 @@ export default function ReportPage({ params }: { params: { id: string } }) {
     try {
       const res = await fetch(`/api/report/${params.id}`)
       if (!res.ok) throw new Error("Report not found")
-      setReport(await res.json())
+      const data = await res.json()
+      setReport(data)
+      saveToHistory(data)
     } catch (err: any) { setError(err.message) }
     finally { setLoading(false) }
   }, [params.id])
@@ -55,9 +68,12 @@ export default function ReportPage({ params }: { params: { id: string } }) {
             <ArrowLeft className="w-4 h-4" /><Flame className="w-5 h-5 text-orange-500" />
             <span className="font-bold hidden sm:inline">RoastPage<span className="text-orange-500">.ai</span></span>
           </Link>
-          <a href={report.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-sm text-dark-400 hover:text-white transition truncate max-w-[200px]">
-            {extractDomain(report.url)} <ExternalLink className="w-3 h-3 flex-shrink-0" />
-          </a>
+          <div className="flex items-center gap-3">
+            <Link href="/history" className="text-sm text-dark-400 hover:text-white transition">My Roasts</Link>
+            <a href={report.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-sm text-dark-400 hover:text-white transition truncate max-w-[200px]">
+              {extractDomain(report.url)} <ExternalLink className="w-3 h-3 flex-shrink-0" />
+            </a>
+          </div>
         </div>
       </nav>
 

@@ -61,7 +61,7 @@ export default function HomePage() {
             <span className="text-xl font-bold">RoastPage<span className="text-orange-500">.ai</span></span>
           </div>
           <div className="flex items-center gap-6">
-            <a href="#pricing" className="text-sm text-dark-300 hover:text-white transition">Pricing</a>
+            <a href="/history" className="text-sm text-dark-300 hover:text-white transition">My Roasts</a><a href="#pricing" className="text-sm text-dark-300 hover:text-white transition">Pricing</a>
             <a href="#faq" className="text-sm text-dark-300 hover:text-white transition">FAQ</a>
           </div>
         </div>
