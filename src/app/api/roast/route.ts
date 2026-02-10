@@ -10,27 +10,14 @@ async function checkUrlExists(url: string): Promise<boolean> {
     const c = new AbortController()
     const t = setTimeout(() => c.abort(), 10000)
     const r = await fetch(url, {
-      method: "HEAD",
+      method: "GET",
       signal: c.signal,
       headers: { "User-Agent": "Mozilla/5.0 (compatible; RoastPageBot/1.0)" },
       redirect: "follow",
     })
     clearTimeout(t)
-    return r.ok || r.status === 403 || r.status === 405
-  } catch {
-    try {
-      const c = new AbortController()
-      const t = setTimeout(() => c.abort(), 10000)
-      const r = await fetch(url, {
-        method: "GET",
-        signal: c.signal,
-        headers: { "User-Agent": "Mozilla/5.0 (compatible; RoastPageBot/1.0)" },
-        redirect: "follow",
-      })
-      clearTimeout(t)
-      return r.ok
-    } catch { return false }
-  }
+    return r.ok
+  } catch { return false }
 }
 
 async function getScreenshotBase64(url: string): Promise<string | null> {
@@ -99,13 +86,18 @@ async function analyzeWithAI(url: string, screenshotBase64: string | null, pageT
   if (!response.ok) {
     const e = await response.text()
     console.error("OpenAI error:", response.status, e)
-    throw new Error(`AI analysis failed (${response.status})`)
+    throw new Error("AI analysis failed. Please try again.")
   }
 
   const data = await response.json()
   const content = data.choices?.[0]?.message?.content
-  if (!content) throw new Error("Empty AI response")
-  return JSON.parse(content)
+  if (!content) throw new Error("AI analysis failed. Please try again.")
+
+  try {
+    return JSON.parse(content)
+  } catch {
+    throw new Error("AI returned invalid response. Please try again.")
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -116,7 +108,7 @@ export async function POST(request: NextRequest) {
 
     const exists = await checkUrlExists(url)
     if (!exists) {
-      return NextResponse.json({ error: "This URL is not reachable. Please check the address and try again." }, { status: 400 })
+      return NextResponse.json({ error: "This website is not reachable. Please check the URL and try again." }, { status: 400 })
     }
 
     const reportId = nanoid(12)
@@ -128,12 +120,16 @@ export async function POST(request: NextRequest) {
     ])
 
     if (!screenshotBase64 && !pageText) {
-      return NextResponse.json({ error: "Could not load page content. The site may be blocking bots." }, { status: 400 })
+      return NextResponse.json({ error: "Could not load page content. The site may be blocking automated access." }, { status: 400 })
     }
 
     const analysis = await analyzeWithAI(url, screenshotBase64, pageText)
 
-    const categories: RoastCategory[] = (analysis.categories || []).map((cat: any, i: number) => ({
+    if (!analysis.categories || !Array.isArray(analysis.categories) || analysis.categories.length === 0) {
+      return NextResponse.json({ error: "AI could not analyze this page. Please try a different URL." }, { status: 500 })
+    }
+
+    const categories: RoastCategory[] = analysis.categories.map((cat: any, i: number) => ({
       name: cat.name || `Category ${i+1}`,
       icon: cat.icon || "chart",
       score: Math.min(100, Math.max(0, Math.round(cat.score || 50))),
