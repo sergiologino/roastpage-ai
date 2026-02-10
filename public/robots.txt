@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /api/
 
-Sitemap: https://roastpage-ai.vercel.app/sitemap.xml
+Sitemap: https://roastpage-ai.com/sitemap.xml
