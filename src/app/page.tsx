@@ -32,6 +32,8 @@ const faqs = [
 export default function HomePage() {
   const [url, setUrl] = useState("")
   const [loading, setLoading] = useState(false)
+  const [promoCode, setPromoCode] = useState("")
+  const [showPromo, setShowPromo] = useState(false)
   const [openFaq, setOpenFaq] = useState<number | null>(null)
   const router = useRouter()
 
@@ -42,7 +44,7 @@ export default function HomePage() {
     if (!isValidUrl(cleanUrl)) { toast.error("Please enter a valid URL"); return }
     setLoading(true)
     try {
-      const res = await fetch("/api/roast", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url: cleanUrl }) })
+      const res = await fetch("/api/roast", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url: cleanUrl, promoCode }) })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || "Analysis failed")
       router.push(`/report/${data.id}`)
@@ -94,7 +96,17 @@ export default function HomePage() {
                 </button>
               </div>
             </form>
-            <p className="text-sm text-dark-400 mt-4">Free quick analysis - Full report just $9.99</p>
+            <div className="mt-4">
+              {!showPromo ? (
+                <button onClick={() => setShowPromo(true)} className="text-sm text-dark-400 hover:text-orange-400 transition">Have a promo code?</button>
+              ) : (
+                <div className="flex items-center justify-center gap-2 mt-2">
+                  <input type="text" value={promoCode} onChange={e => setPromoCode(e.target.value.toUpperCase())} placeholder="PROMO CODE"
+                    className="px-3 py-2 bg-dark-800 border border-dark-600 rounded-lg text-white text-sm w-40 text-center uppercase" />
+                </div>
+              )}
+              <p className="text-sm text-dark-400 mt-2">Free quick analysis - Full report $9.99</p>
+            </div>
           </motion.div>
         </div>
       </section>
