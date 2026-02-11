@@ -5,25 +5,24 @@ import "./globals.css"
 
 export const metadata: Metadata = {
   title: "RoastPage.ai - AI Landing Page Roaster | Brutal Feedback in 30 Seconds",
-  description: "AI analyzes your landing page and gives brutal, actionable feedback on copy, design, CTAs, and conversion potential. Score your page 0-100. Free analysis available.",
-  keywords: ["landing page analyzer", "landing page roast", "conversion optimization", "AI feedback", "landing page score", "CRO tool", "website analyzer"],
+  description: "AI analyzes your landing page and gives brutal, actionable feedback on copy, design, CTAs, and conversion potential. Score your page 0-100.",
+  keywords: ["landing page analyzer", "landing page roast", "conversion optimization", "AI feedback", "landing page score"],
   authors: [{ name: "RoastPage.ai" }],
-  verification: {
-    google: "UGxiVOS2RiiMw7wJ10LNKUHuMh1ic07dWVXk8sX9dig",
-  },
+  verification: { google: "UGxiVOS2RiiMw7wJ10LNKUHuMh1ic07dWVXk8sX9dig" },
   openGraph: {
-    title: "RoastPage.ai - Your Landing Page Needs a Roast",
-    description: "AI analyzes your landing page and gives brutal, actionable feedback in 30 seconds.",
+    title: "RoastPage.ai - Your Landing Page Needs a Roast 🔥",
+    description: "AI analyzes your landing page and gives brutal, actionable feedback in 30 seconds. Free to try!",
     type: "website",
     url: "https://roastpage-ai.com",
     siteName: "RoastPage.ai",
-    images: [{ url: "/api/og", width: 1200, height: 630, alt: "RoastPage.ai" }],
+    images: [{ url: "https://roastpage-ai.com/api/og", width: 1200, height: 630, alt: "RoastPage.ai" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "RoastPage.ai - Your Landing Page Needs a Roast",
-    description: "Get brutal, actionable AI feedback on your landing page in 30 seconds.",
-    images: ["/api/og"],
+    title: "RoastPage.ai - Your Landing Page Needs a Roast 🔥",
+    description: "AI analyzes your landing page and gives brutal, actionable feedback in 30 seconds.",
+    images: ["https://roastpage-ai.com/api/og"],
+    creator: "@SavkinSergeyX",
   },
   robots: { index: true, follow: true },
   metadataBase: new URL("https://roastpage-ai.com"),
@@ -36,11 +35,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>" />
         <link rel="canonical" href="https://roastpage-ai.com" />
         <Script src="https://www.googletagmanager.com/gtag/js?id=G-J77YBKV04K" strategy="afterInteractive" />
-        <Script id="google-analytics" strategy="afterInteractive">
-          {`window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
-          gtag('config', 'G-J77YBKV04K');`}
+        <Script id="ga" strategy="afterInteractive">
+          {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-J77YBKV04K');`}
         </Script>
       </head>
       <body className="min-h-screen bg-dark-950 text-white antialiased">

@@ -26,6 +26,40 @@ function saveToHistory(report: RoastReport) {
   } catch {}
 }
 
+function updateOGMeta(report: RoastReport) {
+  if (typeof document === "undefined") return
+  const domain = extractDomain(report.url)
+  const ogImage = `https://roastpage-ai.com/api/og?score=${report.overallScore}&site=${encodeURIComponent(domain)}`
+  const title = `${domain} scored ${report.overallScore}/100 on RoastPage.ai 🔥`
+  const desc = report.summary
+
+  let metaOgTitle = document.querySelector('meta[property="og:title"]')
+  if (!metaOgTitle) { metaOgTitle = document.createElement("meta"); metaOgTitle.setAttribute("property", "og:title"); document.head.appendChild(metaOgTitle) }
+  metaOgTitle.setAttribute("content", title)
+
+  let metaOgDesc = document.querySelector('meta[property="og:description"]')
+  if (!metaOgDesc) { metaOgDesc = document.createElement("meta"); metaOgDesc.setAttribute("property", "og:description"); document.head.appendChild(metaOgDesc) }
+  metaOgDesc.setAttribute("content", desc)
+
+  let metaOgImage = document.querySelector('meta[property="og:image"]')
+  if (!metaOgImage) { metaOgImage = document.createElement("meta"); metaOgImage.setAttribute("property", "og:image"); document.head.appendChild(metaOgImage) }
+  metaOgImage.setAttribute("content", ogImage)
+
+  let metaTwImage = document.querySelector('meta[name="twitter:image"]')
+  if (!metaTwImage) { metaTwImage = document.createElement("meta"); metaTwImage.setAttribute("name", "twitter:image"); document.head.appendChild(metaTwImage) }
+  metaTwImage.setAttribute("content", ogImage)
+
+  let metaTwTitle = document.querySelector('meta[name="twitter:title"]')
+  if (!metaTwTitle) { metaTwTitle = document.createElement("meta"); metaTwTitle.setAttribute("name", "twitter:title"); document.head.appendChild(metaTwTitle) }
+  metaTwTitle.setAttribute("content", title)
+
+  let metaTwCard = document.querySelector('meta[name="twitter:card"]')
+  if (!metaTwCard) { metaTwCard = document.createElement("meta"); metaTwCard.setAttribute("name", "twitter:card"); document.head.appendChild(metaTwCard) }
+  metaTwCard.setAttribute("content", "summary_large_image")
+
+  document.title = title
+}
+
 export default function ReportPage({ params }: { params: { id: string } }) {
   const [report, setReport] = useState<RoastReport | null>(null)
   const [loading, setLoading] = useState(true)
@@ -39,6 +73,7 @@ export default function ReportPage({ params }: { params: { id: string } }) {
       const data = await res.json()
       setReport(data)
       saveToHistory(data)
+      updateOGMeta(data)
     } catch (err: any) { setError(err.message) }
     finally { setLoading(false) }
   }, [params.id])
@@ -136,10 +171,7 @@ export default function ReportPage({ params }: { params: { id: string } }) {
         <div className="mt-12 mb-8">
           <ShareButtons score={report.overallScore} url={report.url} />
         </div>
-
-        <div className="text-center">
-          <Link href="/" className="text-orange-500 hover:underline text-sm">Roast another page →</Link>
-        </div>
+        <div className="text-center"><Link href="/" className="text-orange-500 hover:underline text-sm">Roast another page →</Link></div>
       </div>
 
       {showPayment && <PaymentModal reportId={params.id} walletAddress={WALLET} price={PRICE} onSuccess={() => { setShowPayment(false); fetchReport() }} onClose={() => setShowPayment(false)} />}
