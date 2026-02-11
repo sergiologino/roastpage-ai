@@ -1,5 +1,5 @@
 import { Metadata } from "next"
-import { redirect } from "next/navigation"
+import ShareRedirect from "./redirect"
 
 type Props = { params: { id: string } }
 
@@ -39,11 +39,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title,
       description,
       images: [ogImage],
-      creator: "@SavkinSergeyX",
     },
   }
 }
 
 export default function SharePage({ params }: Props) {
-  redirect(`/report/${params.id}`)
+  return <ShareRedirect id={params.id} />
 }
