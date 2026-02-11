@@ -169,7 +169,7 @@ export default function ReportPage({ params }: { params: { id: string } }) {
         )}
 
         <div className="mt-12 mb-8">
-          <ShareButtons score={report.overallScore} url={report.url} />
+          <ShareButtons score={report.overallScore} url={report.url} reportId={params.id} />
         </div>
         <div className="text-center"><Link href="/" className="text-orange-500 hover:underline text-sm">Roast another page →</Link></div>
       </div>
